@@ -107,6 +107,22 @@ class BlockManager:
         if len(seq) % self.block_size == 1:
             seq.block_table.append(self._allocate_block())
 
+    def ensure_blocks(self, seq: Sequence):
+        """Allocate additional blocks so block_table covers ALL of seq's tokens.
+
+        Used when resuming a paused sequence: the original blocks are retained
+        (KV cache preserved) but newly appended tokens may cross block boundaries.
+        Raises MemoryError if there are not enough free blocks.
+        """
+        while len(seq.block_table) < seq.num_blocks:
+            if not self.free_block_ids:
+                raise MemoryError(
+                    f"Cannot resume sequence {getattr(seq, 'seq_id', '?')}: "
+                    f"need {seq.num_blocks - len(seq.block_table)} block(s) but only "
+                    f"{len(self.free_block_ids)} free."
+                )
+            seq.block_table.append(self._allocate_block())
+
     def hash_blocks(self, seq: Sequence):
         start = seq.num_cached_tokens // self.block_size
         end = (seq.num_cached_tokens + seq.num_scheduled_tokens) // self.block_size

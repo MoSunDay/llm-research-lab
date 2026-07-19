@@ -8,6 +8,7 @@ from nanovllm.sampling_params import SamplingParams
 class SequenceStatus(Enum):
     WAITING = auto()
     RUNNING = auto()
+    PAUSED = auto()
     FINISHED = auto()
 
 
@@ -29,7 +30,16 @@ class Sequence:
         self.temperature = sampling_params.temperature
         self.max_tokens = sampling_params.max_tokens
         self.ignore_eos = sampling_params.ignore_eos
-        self.logits_processors = list(sampling_params.logits_processors or [])
+        self.stop = list(sampling_params.stop) if sampling_params.stop else []
+        self.stop_token_ids = list(sampling_params.stop_token_ids) if sampling_params.stop_token_ids else []
+        self.pause = list(sampling_params.pause) if sampling_params.pause else []
+        self.pause_token_ids = list(sampling_params.pause_token_ids) if sampling_params.pause_token_ids else []
+        self.logits_processors = list(sampling_params.logits_processors) if sampling_params.logits_processors else []
+        self.finish_reason = None
+        self.stop_index = -1
+        self.pause_reason = None
+        self.pause_index = -1
+        self.pause_search_offset = 0  # char offset: only search for pause strings after this
 
     def __len__(self):
         return self.num_tokens
@@ -40,6 +50,10 @@ class Sequence:
     @property
     def is_finished(self):
         return self.status == SequenceStatus.FINISHED
+
+    @property
+    def is_paused(self):
+        return self.status == SequenceStatus.PAUSED
 
     @property
     def num_completion_tokens(self):
@@ -69,6 +83,13 @@ class Sequence:
         self.token_ids.append(token_id)
         self.last_token = token_id
         self.num_tokens += 1
+
+    def append_tokens(self, token_ids: list[int]):
+        """Append multiple tokens (used when resuming a paused sequence with tool/context results)."""
+        self.token_ids.extend(token_ids)
+        if token_ids:
+            self.last_token = token_ids[-1]
+        self.num_tokens += len(token_ids)
 
     def __getstate__(self):
         last_state = self.last_token if not self.is_prefill else self.token_ids

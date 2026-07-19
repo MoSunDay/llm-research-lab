@@ -1,3 +1,4 @@
+import os
 import pickle
 import torch
 import torch.distributed as dist
@@ -34,7 +35,11 @@ class ModelRunner:
         self.rank = rank
         self.event = event
 
-        dist.init_process_group("nccl", "tcp://localhost:2333", world_size=self.world_size, rank=rank)
+        # The rendezvous port is configurable via MASTER_PORT (torch convention) so
+        # that more than one engine can run on the same host (e.g. a generate()
+        # subprocess spawned from a test process that already holds port 2333).
+        dist_port = os.environ.get("MASTER_PORT", "2333")
+        dist.init_process_group("nccl", f"tcp://localhost:{dist_port}", world_size=self.world_size, rank=rank)
         torch.cuda.set_device(rank)
         default_dtype = torch.get_default_dtype()
         torch.set_default_dtype(hf_config.dtype)
