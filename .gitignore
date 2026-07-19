@@ -1,0 +1,46 @@
+# ===========================================================================
+# Model weights & artifacts -- regenerate locally, NEVER commit (multi-GB).
+#   gpt2-hf/            HuggingFace GPT-2 124M (upstream download)
+#   gpt2-nanovllm/      nano-vllm-format weights (convert_gpt2.py)
+#   gpt2-sft-nanovllm/  SFT weights (convert_nanogpt.py)
+#   nanoGPT/out-sft/    nanoGPT SFT checkpoint (ckpt.pt ~1.4GB)
+# ===========================================================================
+gpt2-hf/
+gpt2-nanovllm/
+gpt2-sft-nanovllm/
+nanoGPT/out-sft/
+
+# large binary blobs anywhere in the tree
+*.bin
+*.pt
+*.safetensors
+*.tflite
+*.msgpack
+*.h5
+*.onnx
+*.ot
+*.ckpt
+flax_model.msgpack
+
+# ---------------------------------------------------------------------------
+# Vendored nanoGPT (github.com/karpathy/nanoGPT, MIT). We only track the SFT
+# data-prep script we wrote; everything else is upstream / generated.
+# ---------------------------------------------------------------------------
+nanoGPT/*
+!nanoGPT/data/
+nanoGPT/data/*
+!nanoGPT/data/sft/
+nanoGPT/data/sft/*
+!nanoGPT/data/sft/prepare.py
+
+# ---------------------------------------------------------------------------
+# nano-vllm ships an optional Rust sampler crate; its build output is huge and
+# is already version-controlled upstream. Ignore the whole crate here.
+# ---------------------------------------------------------------------------
+nano-vllm/rust/
+
+# misc
+*.orig
+*.bak
+*.rej
+.DS_Store
