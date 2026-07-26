@@ -1,0 +1,10 @@
+[package]
+name = "nvllm-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+candle-core = { workspace = true }
+nvllm-models = { path = "../nvllm-models" }
+anyhow = { workspace = true }
